@@ -1,35 +1,93 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import './App.css';
+import * as React from 'react';
+
+
+const title = 'React';
+
+const stories = [
+    {
+        title: 'React',
+        url: '/react',
+        author: 'Jordan Peterson',
+        num_comments: 3,
+        points: 4,
+        objectID: 0,
+    },
+    {
+        title: 'Vite',
+        url: '/vite',
+        author: 'Jack Black',
+        num_comments: 1,
+        points: 5,
+        objectID: 1,
+    },
+];
+
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    
+    const handleSearch = (e) => {
+        console.log(e.target.value);
+    };
+    
+    return (
+        <div>
+            <h1>Hello {title} + Vite!</h1>
+            <Search onSearch={handleSearch}/>
+            <hr/>
+            <List list={stories}/>
+        </div>
+    );
 }
 
-export default App
+
+const Search = (props) => {
+    
+    const [searchTerm, setSearchTerm] = React.useState('');
+    
+    const handleChange = (e) => {
+        setSearchTerm(e.target.value);
+        props.onSearch(e);
+    };
+    
+    return (
+        <div>
+            <label htmlFor="search">{'Search: '}</label>
+            <input id="search"
+                   type="text"
+                   value={searchTerm}
+                   onChange={handleChange}
+            />
+            <p>
+                Searching for: <strong>{searchTerm}</strong>
+            </p>
+        </div>
+    );
+};
+
+
+const List = (props) => {
+    return (
+        <ul>
+            {props.list.map(item => (
+                <Item key={item.objectID}
+                      item={item}/>
+            ))}
+        </ul>
+    );
+};
+
+const Item = (props) => {
+    return (
+        <li key={props.item.objectID}>
+            <span>{props.item.title}</span>
+            <span>{props.item.author}</span>
+            <span>{props.item.num_comments}</span>
+            <span>{props.item.points}</span>
+        </li>
+    );
+    
+};
+
+
+export default App;
