@@ -1,6 +1,10 @@
 import './App.css';
 import * as React from 'react';
-import { useEffect } from 'react';
+import {
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
 
 
 const title = 'React';
@@ -35,7 +39,7 @@ const useStorageState = (key, initialState) => {
 
 
 function App() {
-    const stories = [
+    const initialStories = [
         {
             title: 'React',
             url: '/react',
@@ -54,13 +58,32 @@ function App() {
         },
     ];
     
-    // const [searchTerm, setSearchTerm] = React.useState(localStorage.getItem('search') || 'React search');
+    const [stories, setStories] = useState([]);
+    const [searchTerm, setSearchTerm] = useStorageState('search', '');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isError, setIsError] = useState(false);
     
-    const [searchTerm, setSearchTerm] = useStorageState('search', 'Search here...');
+    const getAsyncStories = () => {
+        return new Promise((resolve) =>
+            setTimeout(
+                () => resolve({ data: { stories: initialStories } }),
+                2000));
+    };
     
-    // React.useEffect(() => {
-    //     localStorage.setItem('search', searchTerm);
-    // }, [searchTerm]);
+    
+    useEffect(() => {
+        setIsLoading(true);
+        getAsyncStories().then(result => {
+            setStories(result.data.stories);
+            setIsLoading(false);
+        })
+                         .catch(() => setIsError(true));
+    },[]);
+    
+    const removeStories = (item) => {
+        const newStories = stories.filter((story) => item.objectID !== story.objectID);
+        setStories(newStories);
+    };
     
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -72,51 +95,85 @@ function App() {
     return (
         <div>
             <h1>Hello {title} + Vite!</h1>
-            <Search search={searchTerm}
-                    onSearch={handleSearch}/>
+            <InputWithLabel id={'search'}
+                            value={searchTerm}
+                            isFocused
+                            onInputChange={handleSearch}
+            >
+                <strong>Search:</strong>
+            </InputWithLabel>
             <hr/>
-            <List list={searchedStories}/>
+            
+            {isError && <p>Error</p>}
+            
+            {isLoading ?
+                (<p>Loading...</p>)
+                : (
+                    <List list={searchedStories}
+                          onRemoveItem={removeStories}
+                    />
+                )
+            }
         </div>
     );
 }
 
-
-const Search = ({ search, onSearch }) => {
+const InputWithLabel = ({ id, children, type = 'text', value, onInputChange, isFocused }) => {
+    
+    const inputRef = useRef(null);
+    
+    useEffect(() => {
+        if (isFocused && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isFocused]);
     
     return (
-        <div>
-            <label htmlFor="search">{'Search: '}</label>
-            <input id="search"
-                   type="text"
-                   value={search}
-                   onChange={onSearch}
+        <>
+            <label htmlFor={id}>
+                {children}
+            </label>
+            &nbsp;
+            <input id={id}
+                   ref={inputRef}
+                   type={type}
+                   value={value}
+                   autoFocus={isFocused}
+                   onChange={onInputChange}
             />
-            <p>
-                Searching for: <strong>{search}</strong>
-            </p>
-        </div>
+        </>
     );
 };
 
 
-const List = ({ list }) => {
+const List = ({ list, onRemoveItem }) => {
     return (
         <ul>
             {list.map((item) => (
                 <Item key={item.objectID}
-                      item={item}/>
+                      item={item}
+                      onRemoveItem={onRemoveItem}
+                />
             ))}
         </ul>
     );
 };
 
-const Item = ({ item }) => {
+const Item = ({ item, onRemoveItem }) => {
+    
     return (
         <li style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', gap: '5px' }}>
             <span>{item.title}</span>
             <span>{item.author}</span>
             <span>{item.num_comments}</span>
             <span>{item.points}</span>
+            <span>
+                <button type='button'
+                        onClick={() => onRemoveItem(item)}
+                >
+                    Remove
+                </button>
+            </span>
         </li>
     );
     
