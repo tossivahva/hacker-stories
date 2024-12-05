@@ -1,5 +1,6 @@
 import './App.css';
 import * as React from 'react';
+import axios from 'axios';
 import {
     useCallback,
     useEffect,
@@ -85,24 +86,25 @@ function App() {
     
     const handleSearchInput = (e) => {
         setSearchTerm(e.target.value);
-    }
+    };
     
-    const handleSearchSubmit = () => {
+    const handleSearchSubmit = (e) => {
         setUrl(`${API_ENDPOINT}${searchTerm}`);
-    }
+        e.preventDefault();
+    };
     
-    const handleFetchStories = useCallback(() => {
-        if (!searchTerm) return;
+    const handleFetchStories = useCallback(async () => {
         dispatchStories({ type: 'STORIES_FETCH_INIT' });
-        fetch(url)
-            .then(response => response.json())
-            .then(result => {
-                dispatchStories({
-                    type: 'STORIES_FETCH_SUCCESS',
-                    payload: result.hits,
-                });
-            })
-            .catch(() => dispatchStories({ type: 'STORIES_FETCH_FAILURE' }));
+        
+        const result = await axios.get(url);
+        try {
+            dispatchStories({
+                type: 'STORIES_FETCH_SUCCESS',
+                payload: result.data.hits,
+            });
+        } catch {
+            dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
+        }
     }, [url]);
     
     useEffect(() => {
@@ -117,29 +119,14 @@ function App() {
         });
     };
     
-    // const handleSearch = (e) => {
-    //     setSearchTerm(e.target.value);
-    //     console.log(e.target.value);
-    // };
-    
-    
     return (
         <div>
             <h1>Hello {title} + Vite!</h1>
-            <InputWithLabel id={'search'}
-                            value={searchTerm}
-                            isFocused
-                            onInputChange={handleSearchInput}
-            >
-                <strong>Search:</strong>
-            </InputWithLabel>
-            
-            <button type='button'
-                    disabled={!searchTerm}
-                    onClick={handleSearchSubmit}
-            >
-                Submit
-            </button>
+            <SearchForm
+                searchTerm={searchTerm}
+                onSearchInput={handleSearchInput}
+                onSearchSubmit={handleSearchSubmit}
+            />
             
             <hr/>
             
@@ -156,6 +143,25 @@ function App() {
         </div>
     );
 }
+
+const SearchForm = ({ searchTerm, onSearchSubmit, onSearchInput }) => {
+    return (
+        <form onSubmit={onSearchSubmit}>
+            <InputWithLabel id='search'
+                            value={searchTerm}
+                            isFocused
+                            onInputChange={onSearchInput}
+            >
+                <strong>Search:</strong>
+            </InputWithLabel>
+            <button type='submit'
+                    disabled={!searchTerm}
+            >
+                Submit
+            </button>
+        </form>
+    );
+};
 
 const InputWithLabel = ({ id, children, type = 'text', value, onInputChange, isFocused }) => {
     
